@@ -1,15 +1,12 @@
+from jinja2 import Environment, FileSystemLoader
 import http.server
 import socketserver
-
 import os
 import shutil
-
 import commonmark
-
-from jinja2 import Environment, FileSystemLoader
-
 import re
 import yaml
+import sys
 
 
 IMPORT_DIR = "./source"
@@ -39,55 +36,67 @@ def build():
         for file in files:
             source_path = os.path.join(root, file)
             file_path = os.path.join(root, file).removeprefix(IMPORT_DIR)
-            build_path = (
-                EXPORT_DIR
-                + file_path.removesuffix(".md").removesuffix(".markdown")
-                + ".html"
-            )
 
-            with open(source_path, encoding="utf-8") as source_file:
-                source_content = source_file.read()
+            if file_path.endswith((".md", ".markdown")):
+                build_path = (
+                    EXPORT_DIR
+                    + file_path.removesuffix(".md").removesuffix(".markdown")
+                    + ".html"
+                )
 
-            match = re.match(r"^---\n(.*?)\n---\n?", source_content, flags=re.DOTALL)
-            source_content_clean = re.sub(r"^---\n.*?\n---\n?", "", source_content, flags=re.DOTALL)
-            if match:
-                page_data = yaml.safe_load(match.group(1))
+                with open(source_path, encoding="utf-8") as source_file:
+                    source_content = source_file.read()
 
-                template = page_data.get("template")
+                match = re.match(
+                    r"^---\n(.*?)\n---\n?", source_content, flags=re.DOTALL
+                )
+                source_content_clean = re.sub(
+                    r"^---\n.*?\n---\n?", "", source_content, flags=re.DOTALL
+                )
+                if match:
+                    page_data = yaml.safe_load(match.group(1))
 
-                if template:
-                    jinja_template = env.get_template(f"{template}.html")
+                    template = page_data.get("template")
 
+                    if template:
+                        jinja_template = env.get_template(f"{template}.html")
 
-                    html_content = commonmark.commonmark(source_content_clean)
+                        html_content = commonmark.commonmark(source_content_clean)
 
-                    template_data = {
-                        **page_data,
-                        "path": file_path,
-                        "slug": os.path.basename(file_path),
-                        "content": html_content,
-                    }
+                        template_data = {
+                            **page_data,
+                            "path": file_path,
+                            "slug": os.path.basename(file_path),
+                            "content": html_content,
+                        }
 
-                    build_content = jinja_template.render(page = template_data)
-                    print(f"Sucesfully builded {file_path} in template {template}.")
+                        build_content = jinja_template.render(page=template_data)
+                        print(f"Sucesfully builded {file_path} in template {template}.")
+                    else:
+                        print(
+                            f"{file_path} has no template in the front matter. No template is being used."
+                        )
+                        build_content = commonmark.commonmark(source_content_clean)
+
                 else:
                     print(
-                        f"{file_path} has no template in the front matter. No template is being used."
+                        f"{file_path} has no front matter. No template is being used."
                     )
                     build_content = commonmark.commonmark(source_content_clean)
 
+                os.makedirs(os.path.dirname(build_path), exist_ok=True)
+
+                with open(build_path, "w", encoding="utf-8") as build_file:
+                    build_file.write(build_content)
             else:
-                print(
-                    f"{file_path} has no front matter. No template is being used."
-                )
-                build_content = commonmark.commonmark(source_content_clean)
-
-            os.makedirs(os.path.dirname(build_path), exist_ok=True)
-
-            with open(build_path, "w", encoding="utf-8") as build_file:
-                build_file.write(build_content)
+                print(f"{file_path} is not a markdown file, so it is just copied.")
+                destination_path = EXPORT_DIR + file_path
+                shutil.copy2(source_path, destination_path)
 
 
 if __name__ == "__main__":
-    build()
-    serve()
+    action = sys.argv[1]
+    if action == "build":
+        build()
+    elif action == "serve":
+        serve()
