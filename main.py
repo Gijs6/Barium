@@ -59,7 +59,7 @@ def build():
                     template = page_data.get("template")
 
                     if template:
-                        jinja_template = env.get_template(f"{template}.html")
+                        jinja_template = env.get_template(f"{template}.jinja")
 
                         html_content = commonmark.commonmark(source_content_clean)
 
