@@ -6,9 +6,16 @@ import shutil
 
 import commonmark
 
+from jinja2 import Environment, FileSystemLoader
+
+import re
+import yaml
+
 
 IMPORT_DIR = "./source"
 EXPORT_DIR = "./build"
+TEMPLATE_DIR = "./templates"
+
 
 def serve(port=8000):
     os.chdir(EXPORT_DIR)
@@ -18,7 +25,10 @@ def serve(port=8000):
         print(f"Serving files at http://localhost:{port}")
         httpd.serve_forever()
 
+
 def build():
+    env = Environment(loader=FileSystemLoader(TEMPLATE_DIR))
+
     for root, dirs, files in os.walk(EXPORT_DIR):
         for f in files:
             os.unlink(os.path.join(root, f))
@@ -28,17 +38,55 @@ def build():
     for root, dirs, files in os.walk("./source"):
         for file in files:
             source_path = os.path.join(root, file)
-            build_path = EXPORT_DIR + os.path.join(root, file).removeprefix(IMPORT_DIR).removesuffix(".md").removesuffix(".markdown") + ".html"
-            
+            file_path = os.path.join(root, file).removeprefix(IMPORT_DIR)
+            build_path = (
+                EXPORT_DIR
+                + file_path.removesuffix(".md").removesuffix(".markdown")
+                + ".html"
+            )
+
             with open(source_path, encoding="utf-8") as source_file:
                 source_content = source_file.read()
-            
-            build_content = commonmark.commonmark(source_content)
+
+            match = re.match(r"^---\n(.*?)\n---\n?", source_content, flags=re.DOTALL)
+            source_content_clean = re.sub(r"^---\n.*?\n---\n?", "", source_content, flags=re.DOTALL)
+            if match:
+                page_data = yaml.safe_load(match.group(1))
+
+                template = page_data.get("template")
+
+                if template:
+                    jinja_template = env.get_template(f"{template}.html")
+
+
+                    html_content = commonmark.commonmark(source_content_clean)
+
+                    template_data = {
+                        **page_data,
+                        "path": file_path,
+                        "slug": os.path.basename(file_path),
+                        "content": html_content,
+                    }
+
+                    build_content = jinja_template.render(page = template_data)
+                    print(f"Sucesfully builded {file_path} in template {template}.")
+                else:
+                    print(
+                        f"{file_path} has no template in the front matter. No template is being used."
+                    )
+                    build_content = commonmark.commonmark(source_content_clean)
+
+            else:
+                print(
+                    f"{file_path} has no front matter. No template is being used."
+                )
+                build_content = commonmark.commonmark(source_content_clean)
 
             os.makedirs(os.path.dirname(build_path), exist_ok=True)
 
             with open(build_path, "w", encoding="utf-8") as build_file:
                 build_file.write(build_content)
+
 
 if __name__ == "__main__":
     build()
