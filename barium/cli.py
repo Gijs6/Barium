@@ -17,8 +17,16 @@ TEMPLATE_DIR = "./templates"
 def serve(port=8000):
     os.chdir(EXPORT_DIR)
 
-    Handler = http.server.SimpleHTTPRequestHandler
-    with socketserver.TCPServer(("", port), Handler) as httpd:
+    class CustomHandler(http.server.SimpleHTTPRequestHandler):
+        def do_GET(self):
+            if not os.path.splitext(self.path)[1]:
+                potential_path = self.path.lstrip("/") + ".html"
+                if os.path.exists(potential_path):
+                    self.path = "/" + potential_path
+
+            return super().do_GET()
+
+    with socketserver.TCPServer(("", port), CustomHandler) as httpd:
         print(f"Serving files at http://localhost:{port}")
         httpd.serve_forever()
 
@@ -93,10 +101,16 @@ def build():
                 destination_path = EXPORT_DIR + file_path
                 shutil.copy2(source_path, destination_path)
 
+def main():
+    if len(sys.argv) < 2:
+        print("Usage: barium [build|serve]")
+        sys.exit(1)
 
-if __name__ == "__main__":
     action = sys.argv[1]
     if action == "build":
         build()
     elif action == "serve":
         serve()
+    else:
+        print(f"Unknown action: {action}")
+        sys.exit(1)

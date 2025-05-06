@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "barium"
+version = "0.1.0"
+description = "A simple static site generator"
+readme = "README.md"
+requires-python = ">=3.7"
+license = "Unlicense"
+authors = [
+  { name="Gijs6", email="gijs6@dupunkto.org" }
+]
+dependencies = [
+  "jinja2",
+  "pyyaml",
+  "commonmark"
+]
+
+[project.scripts]
+barium = "barium.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["barium"]

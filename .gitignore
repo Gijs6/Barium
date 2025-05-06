@@ -2,3 +2,6 @@ build/
 source/
 
 .obsidian/
+__pycache__/
+
+barium.egg-info/
