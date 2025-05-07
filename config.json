@@ -1,0 +1,5 @@
+{
+    "import_dir": "./source",
+    "export_dir": "./build",
+    "template_dir": "./templates"
+}

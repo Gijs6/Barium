@@ -7,11 +7,14 @@ import commonmark
 import re
 import yaml
 import sys
+import json
 
+with open("./config.json", encoding="utf-8") as config_file:
+    config = json.load(config_file)
 
-IMPORT_DIR = "./source"
-EXPORT_DIR = "./build"
-TEMPLATE_DIR = "./templates"
+IMPORT_DIR = config.get("import_dir", "./source")
+EXPORT_DIR = config.get("export_dir", "./build")
+TEMPLATE_DIR = config.get("template_dir", "./templates")
 
 
 def serve(port=8000):
