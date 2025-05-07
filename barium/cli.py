@@ -1,4 +1,4 @@
-from jinja2 import Environment, FileSystemLoader
+from jinja2 import Environment, FileSystemLoader, exceptions
 import http.server
 import socketserver
 import os
@@ -64,27 +64,30 @@ def build():
                 if match:
                     page_data = yaml.safe_load(match.group(1))
 
-                    template = page_data.get("template")
+                    template = page_data.get("template", "default.jinja")
 
                     if template:
-                        jinja_template = env.get_template(f"{template}.jinja")
+                        try:
+                            jinja_template = env.get_template(template)
 
-                        html_content = commonmark.commonmark(source_content_clean)
+                            html_content = commonmark.commonmark(source_content_clean)
 
-                        template_data = {
-                            **page_data,
-                            "path": file_path,
-                            "slug": os.path.basename(file_path),
-                            "content": html_content,
-                        }
+                            template_data = {
+                                **page_data,
+                                "path": file_path,
+                                "slug": os.path.basename(file_path),
+                                "content": html_content,
+                            }
 
-                        build_content = jinja_template.render(page=template_data)
-                        print(f"Sucesfully builded {file_path} in template {template}.")
-                    else:
-                        print(
-                            f"{file_path} has no template in the front matter. No template is being used."
-                        )
-                        build_content = commonmark.commonmark(source_content_clean)
+                            build_content = jinja_template.render(page=template_data)
+                            print(
+                                f"Sucesfully builded {file_path} in template {template}."
+                            )
+                        except exceptions.TemplateNotFound:
+                            print(
+                                f"{file_path} has no template in the front matter. No template is being used."
+                            )
+                            build_content = commonmark.commonmark(source_content_clean)
 
                 else:
                     print(
@@ -100,6 +103,7 @@ def build():
                 print(f"{file_path} is not a markdown file, so it is just copied.")
                 destination_path = EXPORT_DIR + file_path
                 shutil.copy2(source_path, destination_path)
+
 
 def main():
     if len(sys.argv) < 2:
