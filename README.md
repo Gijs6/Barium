@@ -11,7 +11,7 @@ It also includes a really simple HTTP server to help you preview your site durin
 
 ## Documentation
 
-To get started, clone the repo and run `pip install .`. You can then just run `barium build` and `barium serve`.
+To get started, run `pip install BariumSSG`. You can then just run `barium build` and `barium serve`.
 
 Barium reads files from the `source` directory, processes them with templates from the `templates` directory, and saves the output HTML files in the `build` directory.  
 You can set which template to use in a file's front matter by setting the `template` to a file name (including file extension) property. If no template is provided, Barium tries to use `default.jinja`.  
