@@ -7,14 +7,15 @@ import commonmark
 import re
 import yaml
 import sys
-import json
 
-with open("./config.json", encoding="utf-8") as config_file:
-    config = json.load(config_file)
+with open("./config.yaml", encoding="utf-8") as config_file:
+    config = yaml.safe_load(config_file)
 
 IMPORT_DIR = config.get("import_dir", "./source")
 EXPORT_DIR = config.get("export_dir", "./build")
 TEMPLATE_DIR = config.get("template_dir", "./templates")
+
+template_vars = config.get("template_vars", {})
 
 
 def serve(port=8000):
@@ -80,6 +81,7 @@ def build():
                                 "path": file_path,
                                 "slug": os.path.basename(file_path),
                                 "content": html_content,
+                                **template_vars
                             }
 
                             build_content = jinja_template.render(page=template_data)
