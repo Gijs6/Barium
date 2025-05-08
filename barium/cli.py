@@ -8,18 +8,9 @@ import re
 import yaml
 import sys
 
-with open("./config.yaml", encoding="utf-8") as config_file:
-    config = yaml.safe_load(config_file)
 
-IMPORT_DIR = config.get("import_dir", "./source")
-EXPORT_DIR = config.get("export_dir", "./build")
-TEMPLATE_DIR = config.get("template_dir", "./templates")
-
-template_vars = config.get("template_vars", {})
-
-
-def serve(port=8000):
-    os.chdir(EXPORT_DIR)
+def serve(export_dir, port=8000):
+    os.chdir(export_dir)
 
     class CustomHandler(http.server.SimpleHTTPRequestHandler):
         def do_GET(self):
@@ -35,10 +26,10 @@ def serve(port=8000):
         httpd.serve_forever()
 
 
-def build():
-    env = Environment(loader=FileSystemLoader(TEMPLATE_DIR))
+def build(import_dir, export_dir, template_dir, template_vars):
+    env = Environment(loader=FileSystemLoader(template_dir))
 
-    for root, dirs, files in os.walk(EXPORT_DIR):
+    for root, dirs, files in os.walk(export_dir):
         for f in files:
             os.unlink(os.path.join(root, f))
         for d in dirs:
@@ -47,11 +38,11 @@ def build():
     for root, dirs, files in os.walk("./source"):
         for file in files:
             source_path = os.path.join(root, file)
-            file_path = os.path.join(root, file).removeprefix(IMPORT_DIR)
+            file_path = os.path.join(root, file).removeprefix(import_dir)
 
             if file_path.endswith((".md", ".markdown")):
                 build_path = (
-                    EXPORT_DIR
+                    export_dir
                     + file_path.removesuffix(".md").removesuffix(".markdown")
                     + ".html"
                 )
@@ -106,7 +97,7 @@ def build():
                     build_file.write(build_content)
             else:
                 print(f"{file_path} is not a markdown file, so it is just copied.")
-                destination_path = EXPORT_DIR + file_path
+                destination_path = export_dir + file_path
                 shutil.copy2(source_path, destination_path)
 
 
@@ -115,11 +106,25 @@ def main():
         print("Usage: barium [build|serve]")
         sys.exit(1)
 
+
+    config = {}
+
+
+    with open("./config.yaml", encoding="utf-8") as cf:
+        config_file = yaml.safe_load(cf)
+
+    config["import_dir"] = config_file.get("import_dir", "./source")
+    config["export_dir"] = config_file.get("export_dir", "./build")
+    config["template_dir"] = config_file.get("template_dir", "./templates")
+    config["template_vars"] = config_file.get("template_vars", {})
+
+    
+
     action = sys.argv[1]
     if action == "build":
-        build()
+        build(**config)
     elif action == "serve":
-        serve()
+        serve(**config)
     else:
         print(f"Unknown action: {action}")
         sys.exit(1)
