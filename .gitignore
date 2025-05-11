@@ -1,5 +1,6 @@
 build/
 source/
+templates/
 
 .obsidian/
 __pycache__/
