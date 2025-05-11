@@ -9,13 +9,13 @@ description = "A simple static site generator"
 readme = "README.md"
 requires-python = ">=3.7"
 license = "Unlicense"
-authors = [
-  { name="Gijs6", email="gijs6@dupunkto.org" }
-]
+authors = [{ name = "Gijs6", email = "gijs6@dupunkto.org" }]
 dependencies = [
   "jinja2",
   "pyyaml",
-  "commonmark"
+  "commonmark",
+  "markdown-it-py",
+  "mdit-py-plugins",
 ]
 
 [project.scripts]
