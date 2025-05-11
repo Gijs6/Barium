@@ -14,8 +14,7 @@ dependencies = [
   "jinja2",
   "pyyaml",
   "commonmark",
-  "markdown-it-py",
-  "mdit-py-plugins",
+  "markdown-it-py"
 ]
 
 [project.scripts]

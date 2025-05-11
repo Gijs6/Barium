@@ -7,3 +7,5 @@ __pycache__/
 
 barium.egg-info/
 BariumSSG.egg-info/
+
+config.yaml

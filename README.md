@@ -25,9 +25,10 @@ The templates can be every file extension that jinja supports. Inside the templa
 
 You can confige settings in the `config.yaml` file.
 
-| Property        | Description                                                         | Standard value |
-| --------------- | ------------------------------------------------------------------- | -------------- |
-| `import_dir`    | The directory where the markdown files are located                  | `./source`     |
-| `export_dir`    | The directory where the HTML files should be built                  | `./build`      |
-| `template_dir`  | The directory where the template files are located                  | `./templates`  |
-| `template_vars` | A dictonary of template vaiables that are avaiable in all templates | `{}`           |
+| Property        | Description                                                         | Default/fallback |
+| --------------- | ------------------------------------------------------------------- | ---------------------- |
+| `import_dir`    | The directory where the markdown files are located                  | `./source`             |
+| `export_dir`    | The directory where the HTML files should be built                  | `./build`              |
+| `template_dir`  | The directory where the template files are located                  | `./templates`          |
+| `template_vars` | A dictonary of template vaiables that are avaiable in all templates | `{}`                   |
+| `port`          | The port where the files should be served                           | `8000`                 |

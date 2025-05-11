@@ -7,7 +7,9 @@ import re
 import yaml
 import sys
 from markdown_it import MarkdownIt
-from mdit_py_plugins.github import github_plugin
+from importlib.metadata import version
+
+__version__ = version("BariumSSG")
 
 
 def serve(export_dir, port=8000):
@@ -23,14 +25,14 @@ def serve(export_dir, port=8000):
             return super().do_GET()
 
     with socketserver.TCPServer(("", port), CustomHandler) as httpd:
-        print(f"Serving files at http://localhost:{port}")
+        print(f"Serving files at http://localhost:{port}.")
         httpd.serve_forever()
 
 
 def build(import_dir, export_dir, template_dir, template_vars):
     env = Environment(loader=FileSystemLoader(template_dir))
-    
-    md_renderer = MarkdownIt().use(github_plugin)
+
+    md_renderer = MarkdownIt()
 
     for root, dirs, files in os.walk(export_dir):
         for f in files:
@@ -109,25 +111,36 @@ def build(import_dir, export_dir, template_dir, template_vars):
 
 
 def main():
+    print(f"BariumSSG - Version {__version__}")
+
     if len(sys.argv) < 2:
         print("Usage: barium [build|serve]")
         sys.exit(1)
 
     config = {}
 
-    with open("./config.yaml", encoding="utf-8") as cf:
-        config_file = yaml.safe_load(cf)
+    try:
+        with open("./config.yaml", encoding="utf-8") as cf:
+            config_file = yaml.safe_load(cf)
+    except FileNotFoundError:
+        print("No config file found. Default values are used.")
+        config_file = {}
+
+    if not config_file:
+        print("No valid config file. Default values are used.")
+        config_file = {}
 
     config["import_dir"] = config_file.get("import_dir", "./source")
     config["export_dir"] = config_file.get("export_dir", "./build")
     config["template_dir"] = config_file.get("template_dir", "./templates")
     config["template_vars"] = config_file.get("template_vars", {})
+    config["port"] = config_file.get("port", 8000)
 
     action = sys.argv[1]
     if action == "build":
         build(**config)
     elif action == "serve":
-        serve(**config)
+        serve(export_dir=config["export_dir"], port=config["port"])
     else:
         print(f"Unknown action: {action}")
         sys.exit(1)
