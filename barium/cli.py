@@ -29,10 +29,12 @@ def serve(export_dir, port=8000):
         httpd.serve_forever()
 
 
-def build(import_dir, export_dir, template_dir, template_vars):
+def build(import_dir, export_dir, template_dir, template_vars, default_template):
     env = Environment(loader=FileSystemLoader(template_dir))
 
     md_renderer = MarkdownIt()
+
+    # Clean the export dir
 
     for root, dirs, files in os.walk(export_dir):
         for f in files:
@@ -70,21 +72,21 @@ def build(import_dir, export_dir, template_dir, template_vars):
                     template = page_data.get("template")
                     if not template:
                         print(
-                            f"{file_path} has no template property set in the front matter. Attempting to use default.jinja."
+                            f"{file_path} has no template property set in the front matter. Attempting to use {default_template}."
                         )
-                        template = "default.jinja"
+                        template = default_template
                 else:
                     print(
-                        f"{file_path} has no front matter at all. Attempting to use default.jinja."
+                        f"{file_path} has no front matter at all. Attempting to use {default_template}."
                     )
-                    template = "default.jinja"
+                    template = default_template
 
                 try:
                     jinja_template = env.get_template(template)
 
                     html_content = md_renderer.render(source_content_clean)
 
-                    template_data = {
+                    template_page_data = {
                         **page_data,
                         "path": file_path,
                         "slug": os.path.basename(file_path),
@@ -92,8 +94,9 @@ def build(import_dir, export_dir, template_dir, template_vars):
                         **template_vars,
                     }
 
-                    build_content = jinja_template.render(page=template_data)
+                    build_content = jinja_template.render(page=template_page_data)
                     print(f"Sucesfully builded {file_path} in template {template}.")
+
                 except exceptions.TemplateNotFound:
                     print(
                         f"{template} is not a template. {file_path} is built without a template!"
@@ -111,7 +114,7 @@ def build(import_dir, export_dir, template_dir, template_vars):
 
 
 def main():
-    print(f"BariumSSG - Version {__version__}")
+    print(f"BariumSSG {__version__}")
 
     if len(sys.argv) < 2:
         print("Usage: barium [build|serve]")
@@ -134,6 +137,7 @@ def main():
     config["export_dir"] = config_file.get("export_dir", "./build")
     config["template_dir"] = config_file.get("template_dir", "./templates")
     config["template_vars"] = config_file.get("template_vars", {})
+    config["default_template"] = config_file.get("default_template", "default.jinja")
     config["port"] = config_file.get("port", 8000)
 
     action = sys.argv[1]
