@@ -12,7 +12,10 @@ from importlib.metadata import version
 __version__ = version("BariumSSG")
 
 
-def serve(export_dir, port=8000):
+def serve(**config):
+    export_dir = config["export_dir"]
+    port = config["port"]
+
     os.chdir(export_dir)
 
     class CustomHandler(http.server.SimpleHTTPRequestHandler):
@@ -29,7 +32,14 @@ def serve(export_dir, port=8000):
         httpd.serve_forever()
 
 
-def build(import_dir, export_dir, template_dir, template_vars, default_template):
+def build(**config):
+    import_dir = config["import_dir"]
+    export_dir = config["export_dir"]
+    template_dir = config["template_dir"]
+    template_vars = config["template_vars"]
+    default_template = config["default_template"]
+
+
     env = Environment(loader=FileSystemLoader(template_dir))
 
     md_renderer = MarkdownIt()
@@ -47,12 +57,12 @@ def build(import_dir, export_dir, template_dir, template_vars, default_template)
             source_path = os.path.join(root, file)
             file_path = os.path.join(root, file).removeprefix(import_dir)
 
-            if file_path.endswith((".md", ".markdown")):
+            if os.path.splitext(file_path)[1] in [".md", ".markdown"]:
                 # So if not a static file, but a markdown, that needs to be built
 
                 build_path = (
                     export_dir
-                    + file_path.removesuffix(".md").removesuffix(".markdown")
+                    + os.path.splitext(file_path)[0]
                     + ".html"
                 )
 
@@ -144,7 +154,7 @@ def main():
     if action == "build":
         build(**config)
     elif action == "serve":
-        serve(export_dir=config["export_dir"], port=config["port"])
+        serve(**config)
     else:
         print(f"Unknown action: {action}")
         sys.exit(1)
